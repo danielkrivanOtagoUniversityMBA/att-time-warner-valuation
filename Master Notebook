@@ -1,8 +1,9 @@
 # ==========================================
-# AT&T / TIME WARNER VALUATION ANALYSIS
+# AT&T / TIME WARNNER VALUATION ANALYSIS
 # Daniel Krivan
 # Strategy Implementation Case
 # ==========================================
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
