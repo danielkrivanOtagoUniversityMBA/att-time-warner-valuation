@@ -231,7 +231,7 @@ print("-" * 50)
 
 synergy_sensitivity = []
 
-for s in [250, 500, 750, 1000, 1250\]:
+for s in [250, 500, 750, 1000, 1250]:
 
     pv = (
         s
