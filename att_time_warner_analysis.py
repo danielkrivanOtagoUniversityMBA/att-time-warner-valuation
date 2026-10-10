@@ -43,12 +43,11 @@ annual_synergy = 1000
 
 ke = rf + beta * mrp
 
-kd_after_tax = cost_debt * (1-tax)
+kd_after_tax = cost_debt * (1 - tax)
 
 wacc = (
     equity_weight * ke
-    +
-    debt_weight * kd_after_tax
+    + debt_weight * kd_after_tax
 )
 
 print("\nWACC ANALYSIS")
@@ -65,7 +64,7 @@ print(f"WACC: {wacc:.2%}")
 delta_wc = WC_2016 - WC_2015
 
 fcf = (
-    EBIT * (1-tax)
+    EBIT * (1 - tax)
     + DA
     - CAPEX
     - delta_wc
@@ -87,216 +86,237 @@ def dcf(
     terminal_growth=0.03
 ):
 
-    years = np.arange(1,6)
+    years = np.arange(1, 6)
 
     fcfs = [
-        fcf0*(1+growth)**t
-      ***or t in years
+        fcf0 * (1 + growth) ** t
+        for t in years
     ]
 
-    pv_fcfs***[
+    pv_fcfs = [
         fcfs[i] /
-        ((1+wacc)**(i+1))
-        for i in rang*(5)
+        ((1 + wacc) ** (i + 1))
+        for i in range(5)
     ]
 
     terminal_fcf = (
-  *     fcfs[-1]
-        *
-        (1*terminal_growth)
+        fcfs[-1]
+        * (1 + terminal_growth)
     )
 
-    termin*l_value = (
-        terminal_fcf /*        (wacc-terminal_growth)
-   *)
+    terminal_value = (
+        terminal_fcf /
+        (wacc - terminal_growth)
+    )
 
     pv_terminal = (
-        ter*inal_value /
-        ((1+wacc)**5)***  )
+        terminal_value /
+        ((1 + wacc) ** 5)
+    )
 
     return (
-        sum(pv***fs)
-        +
-        pv_termina***   )
+        sum(pv_fcfs)
+        + pv_terminal
+    )
 
-# ========================***===============
+# ==========================================
 # BASE DCF
-# ===***================================***=
+# ==========================================
 
 ev_7 = dcf(
     fcf,
-    0.07***   wacc
+    0.07,
+    wacc
 )
 
 ev_8 = dcf(
     fcf,
-*** 0.08,
+    0.08,
     wacc
 )
 
-print("\nDCF ***UATION")
+print("\nDCF VALUATION")
 print("-" * 50)
 
-print(***% Growth EV: ${ev_7:,.0f}m")
-pri***f"8% Growth EV: ${ev_8:,.0f}m")
-***================================***=======
+print(f"7% Growth EV = ${ev_7:,.0f}m")
+print(f"8% Growth EV = ${ev_8:,.0f}m")
+
+# ==========================================
 # SYNERGY VALUE
-# ======***================================***synergy_value = (
-    annual_syn***y
-    *
-    (1-tax)
-    /
-    wa***)
+# ==========================================
 
-print("\nSYNERGY VALUE")
-prin***-" * 50)
-
-print(
-    f"Synergy P***${synergy_value:,.0f}m"
+synergy_value = (
+    annual_synergy
+    * (1 - tax)
+    / wacc
 )
 
-# ===***================================***=
-# REVERSE DCF
-# ==============***=========================
+print("\nSYNERGY VALUE")
+print("-" * 50)
 
-targe***alue = (
-    offer_value -
-    s***rgy_value
+print(
+    f"Synergy PV = ${synergy_value:,.0f}m"
+)
+
+# ==========================================
+# REVERSE DCF
+# ==========================================
+
+target_value = (
+    offer_value
+    - synergy_value
 )
 
 def objective(g):
 
-*** value = dcf(
+    value = dcf(
         fcf,
-     ***g,
+        g,
         wacc,
-        termina***rowth
+        terminal_growth
     )
 
     return abs(
-   ***  value -
-        target_value
- ***)
+        value - target_value
+    )
 
 result = minimize_scalar(
-   ***jective,
-    bounds=(0.05,0.15),***  method="bounded"
+    objective,
+    bounds=(0.05, 0.15),
+    method="bounded"
 )
 
-print("\nR***RSE DCF")
+print("\nREVERSE DCF")
 print("-" * 50)
 
-print***   f"Implied Growth: {result.x:.***"
+print(
+    f"Implied Growth = {result.x:.2%}"
 )
 
-# =========================***==============
-# WACC SENSITIVIT*** ===============================***========
+# ==========================================
+# WACC SENSITIVITY
+# ==========================================
 
-print("\nWACC SENSITIV***")
+print("\nWACC SENSITIVITY")
 print("-" * 50)
 
-for w in [0.08,0.09,0.10,0.11,0.12\]:
+wacc_sensitivity = []
 
-    valu*** (
+for w in [0.08, 0.09, 0.10, 0.11, 0.12\]:
+
+    value = (
         dcf(
-            fcf,***          0.09,
-            w,
- ***        0.03
-        )
-        +***      synergy_value
-    )
-
-    p***t(
-        f"WACC {w:.0%}: "
-   ***  f"${value:,.0f}m"
-    )
-
-# ===***================================***=
-# SYNERGY SENSITIVITY
-# ======***================================***print("\nSYNERGY SENSITIVITY")
-p***t("-" * 50)
-
-for s in [250,500,750,1000,1250\]:
-
-    pv = (
-       ***        *
-        (1-tax)
-      ***
-        wacc
-    )
-
-    total =***        dcf(
             fcf,
-  ***       0.09,
-            wacc,
- ***        0.03
+            0.09,
+            w,
+            0.03
         )
-        +***      pv
+        + synergy_value
+    )
+
+    wacc_sensitivity.append(
+        [w, value]
     )
 
     print(
-     ***f"Synergy {s}m -> "
-        f"EV***total:,.0f}m"
+        f"WACC {w:.0%}: ${value:,.0f}m"
     )
 
-# =========***==============================
-#***NTE CARLO
-# ====================***===================
+# ==========================================
+# SYNERGY SENSITIVITY
+# ==========================================
 
-print("\nRU***NG MONTE CARLO...")
-print("-" * ***
+print("\nSYNERGY SENSITIVITY")
+print("-" * 50)
+
+synergy_sensitivity = []
+
+for s in [250, 500, 750, 1000, 1250\]:
+
+    pv = (
+        s
+        * (1 - tax)
+        / wacc
+    )
+
+    total = (
+        dcf(
+            fcf,
+            0.09,
+            wacc,
+            0.03
+        )
+        + pv
+    )
+
+    synergy_sensitivity.append(
+        [s, total]
+    )
+
+    print(
+        f"Synergy {s}m -> EV ${total:,.0f}m"
+    )
+
+# ==========================================
+# MONTE CARLO
+# ==========================================
+
+print("\nRUNNING MONTE CARLO")
+print("-" * 50)
 
 simulation_count = 50000
 
-grow***mean = 0.09
+growth_mean = 0.09
 growth_std = 0.02
 
-s***rgy_mean = 1000
-synergy_std = 25***wacc_mean = 0.0981
-wacc_std = 0.***5
+synergy_mean = 1000
+synergy_std = 250
+
+wacc_mean = 0.0981
+wacc_std = 0.0075
 
 values = []
 
-for _ in range(s***lation_count):
+for _ in range(simulation_count):
 
-    growth = np.***dom.normal(
-        growth_mean,***      growth_std
+    growth = np.random.normal(
+        growth_mean,
+        growth_std
     )
 
-    syne*** = np.random.normal(
-        syn***y_mean,
+    synergy = np.random.normal(
+        synergy_mean,
         synergy_std
-    ***    wacc_sim = np.random.normal(***      wacc_mean,
-        wacc_st***   )
-
-    growth = max(
-        ***wth,
-        0
     )
 
-    synerg*** max(
-        synergy,
-        0***  )
+    wacc_sim = np.random.normal(
+        wacc_mean,
+        wacc_std
+    )
+
+    growth = max(growth, 0)
+
+    synergy = max(synergy, 0)
 
     wacc_sim = max(
-       ***cc_sim,
-        terminal_growth ***.01
+        wacc_sim,
+        terminal_growth + 0.01
     )
 
     synergy_pv = (
-  ***   synergy
-        *
-        (1-***)
-        /
-        wacc_sim
-   ***
+        synergy
+        * (1 - tax)
+        / wacc_sim
+    )
+
     total_value = (
-        dcf***           fcf,
-            grow***           wacc_sim,
+        dcf(
+            fcf,
+            growth,
+            wacc_sim,
             terminal_growth
         )
-        +
-        synergy_pv
+        + synergy_pv
     )
 
     values.append(
@@ -310,9 +330,7 @@ values = np.array(values)
 # ==========================================
 
 mean_ev = np.mean(values)
-
 median_ev = np.median(values)
-
 std_ev = np.std(values)
 
 expected_gain = np.mean(
@@ -331,23 +349,22 @@ print(f"Median EV: ${median_ev:,.0f}m")
 print(f"Std Dev: ${std_ev:,.0f}m")
 print(f"Expected Gain: ${expected_gain:,.0f}m")
 print(
-    f"Probability Value Creation: "
-    f"{probability:.1%}"
+    f"Probability Value Creation: {probability:.1%}"
 )
 
 # ==========================================
 # PERCENTILES
 # ==========================================
 
+percentiles = np.percentile(
+    values,
+    [1, 5, 10, 25, 50, 75, 90, 95, 99]
+)
+
 print("\nPERCENTILES")
 print("-" * 50)
 
-percentiles = np.percentile(
-    values,
-    [1,5,10,25,50,75,90,95,99]
-)
-
-for p,v in zip(
+for p, v in zip(
     [1,5,10,25,50,75,90,95,99],
     percentiles
 ):
@@ -356,64 +373,46 @@ for p,v in zip(
     )
 
 # ==========================================
-# DOWNSIDE
+# DOWNSIDE RISK
 # ==========================================
 
-prob_95 = np.mean(
-    values < 95000
-)
-
-prob_100 = np.mean(
-    values < 100000
-)
-
-prob_105 = np.mean(
-    values < 105000
-)
+prob_95 = np.mean(values < 95000)
+prob_100 = np.mean(values < 100000)
+prob_105 = np.mean(values < 105000)
 
 print("\nDOWNSIDE RISKS")
 print("-" * 50)
 
-print(
-    f"EV < 95bn:  {prob_95:.1%}"
-)
-
-print(
-    f"EV < 100bn: {prob_100:.1%}"
-)
-
-print(
-    f"EV < 105bn: {prob_105:.1%}"
-)
+print(f"EV < $95bn:  {prob_95:.1%}")
+print(f"EV < $100bn: {prob_100:.1%}")
+print(f"EV < $105bn: {prob_105:.1%}")
 
 # ==========================================
 # CHART
-# ==========================================
+# ========================================
 
-plt.figure(
-    figsize=(12,6)
-)
+plt.figure(figsize=(12,6))
 
 plt.hist(
-    values/1000,
+    values / 1000,
     bins=100,
     alpha=0.7
 )
 
 plt.axvline(
-    offer_value/1000,
-    color='red',
-    linestyle='--',
+    offer_value / 1000,
+    color="red",
+    linestyle="--",
     linewidth=3,
-    label='AT&T Offer Value'
+    label="AT&T Offer Value"
 )
 
 plt.axvline(
-    mean_ev/1000,
-    color='green',
-    linestyle='--',
+    mean_ev / 1000,
+    color="green",
+    linestyle="--",
     linewidth=3,
-    label='Expected Value'
+    label="Expected Value"
 )
 
 plt.title(
@@ -430,4 +429,147 @@ plt.ylabel(
 
 plt.legend()
 
+# SAVE CHART
+
+plt.savefig(
+    "monte_carlo_distribution.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
 plt.show()
+
+# ==========================================
+# EXPORTS
+# ==========================================
+
+summary = pd.DataFrame({
+
+    "Metric":[
+        "Mean EV",
+        "Median EV",
+        "Offer Value",
+        "Expected Gain",
+        "Probability Value Creation",
+        "WACC",
+        "Implied Growth"
+    ],
+
+    "Value":[
+        mean_ev,
+        median_ev,
+        offer_value,
+        expected_gain,
+        probability,
+        wacc,
+        result.x
+    ]
+
+})
+
+summary.to_csv(
+    "summary_results.csv",
+    index=False
+)
+
+percentiles_df = pd.DataFrame({
+
+    "Percentile":[
+        1,5,10,25,50,75,90,95,99
+    ],
+
+    "Enterprise_Value": percentiles
+
+})
+
+percentiles_df.to_csv(
+    "percentiles.csv",
+    index=False
+)
+
+mc_df = pd.DataFrame({
+    "Enterprise_Value": values
+})
+
+mc_df.to_csv(
+    "monte_carlo_results.csv",
+    index=False
+)
+
+wacc_df = pd.DataFrame(
+    wacc_sensitivity,
+    columns=["WACC","Enterprise_Value"]
+)
+
+wacc_df.to_csv(
+    "wacc_sensitivity.csv",
+    index=False
+)
+
+synergy_df = pd.DataFrame(
+    synergy_sensitivity,
+    columns=["Synergy","Enterprise_Value"]
+)
+
+synergy_df.to_csv(
+    "synergy_sensitivity.csv",
+    index=False
+)
+
+with pd.ExcelWriter(
+    "att_time_warner_results.xlsx"
+) as writer:
+
+    summary.to_excel(
+        writer,
+        sheet_name="Summary",
+        index=False
+    )
+
+    percentiles_df.to_excel(
+        writer,
+        sheet_name="Percentiles",
+        index=False
+    )
+
+    wacc_df.to_excel(
+        writer,
+        sheet_name="WACC",
+        index=False
+    )
+
+    synergy_df.to_excel(
+        writer,
+        sheet_name="Synergies",
+        index=False
+    )
+
+print("\nEXPORT COMPLETE")
+print("-" * 50)
+
+print("summary_results.csv")
+print("percentiles.csv")
+print("monte_carlo_results.csv")
+print("wacc_sensitivity.csv")
+print("synergy_sensitivity.csv")
+print("att_time_warner_results.xlsx")
+print("monte_carlo_distribution.png")
+
+# ==========================================
+# COLAB DOWNLOADS
+# ==========================================
+
+try:
+
+    from google.colab import files
+
+    files.download(
+        "att_time_warner_results.xlsx"
+    )
+
+    files.download(
+        "monte_carlo_distribution.png"
+    )
+
+except:
+    pass
