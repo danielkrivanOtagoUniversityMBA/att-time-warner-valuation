@@ -202,7 +202,7 @@ print("-" * 50)
 
 wacc_sensitivity = []
 
-for w in [0.08, 0.09, 0.10, 0.11, 0.12\]:
+for w in [0.08, 0.09, 0.10, 0.11, 0.12]:
 
     value = (
         dcf(
